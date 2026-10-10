@@ -700,5 +700,7 @@
 	"phonePairedOn": "Đã ghép nối {date}",
 	"phoneRevokeDevice": "Thu hồi",
 	"phoneRevokeDeviceNamed": "Thu hồi {name}",
-	"whatsNew": "Có gì mới"
+	"whatsNew": "Có gì mới",
+	"pauseRecording": "Tạm dừng",
+	"resumeRecording": "Tiếp tục"
 }

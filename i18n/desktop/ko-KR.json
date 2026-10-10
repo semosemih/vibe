@@ -700,5 +700,7 @@
 	"phonePairedOn": "{date}에 페어링됨",
 	"phoneRevokeDevice": "취소",
 	"phoneRevokeDeviceNamed": "{name} 취소",
-	"whatsNew": "새로운 기능"
+	"whatsNew": "새로운 기능",
+	"pauseRecording": "일시 정지",
+	"resumeRecording": "재개"
 }

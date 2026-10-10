@@ -700,5 +700,7 @@
 	"phonePairedOn": "{date} को पेयर किया गया",
 	"phoneRevokeDevice": "रद्द करें",
 	"phoneRevokeDeviceNamed": "{name} रद्द करें",
-	"whatsNew": "नया क्या है"
+	"whatsNew": "नया क्या है",
+	"pauseRecording": "रोकें",
+	"resumeRecording": "फिर से शुरू करें"
 }

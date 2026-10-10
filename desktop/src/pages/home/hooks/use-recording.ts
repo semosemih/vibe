@@ -18,6 +18,7 @@ export function useRecording(onBeforeStart: () => void) {
 	const [inputDevice, setInputDevice] = useState<AudioDevice | null>(null)
 	const [outputDevice, setOutputDevice] = useState<AudioDevice | null>(null)
 	const [isRecording, setIsRecording] = useState(false)
+	const [isPaused, setIsPaused] = useState(false)
 	const [recordingName, setRecordingName] = useState('')
 
 	function setInputDeviceAndSave(value: SetStateAction<AudioDevice | null>) {
@@ -58,6 +59,7 @@ export function useRecording(onBeforeStart: () => void) {
 		startKeepAwake(KEEP_AWAKE.record)
 		onBeforeStart()
 		setIsRecording(true)
+		setIsPaused(false)
 		const selectedDevices = [inputDevice, outputDevice].filter((device): device is AudioDevice => device !== null)
 		try {
 			await invoke('start_record', {
@@ -67,7 +69,28 @@ export function useRecording(onBeforeStart: () => void) {
 		} catch (error) {
 			stopKeepAwake(KEEP_AWAKE.record)
 			setIsRecording(false)
+			setIsPaused(false)
 			console.error('startRecord error: ', error)
+			setErrorModal?.({ log: String(error), open: true })
+		}
+	}
+
+	async function pauseRecord() {
+		try {
+			await emit('pause_record')
+			setIsPaused(true)
+		} catch (error) {
+			console.error('pauseRecord error: ', error)
+			setErrorModal?.({ log: String(error), open: true })
+		}
+	}
+
+	async function resumeRecord() {
+		try {
+			await emit('resume_record')
+			setIsPaused(false)
+		} catch (error) {
+			console.error('resumeRecord error: ', error)
 			setErrorModal?.({ log: String(error), open: true })
 		}
 	}
@@ -75,9 +98,11 @@ export function useRecording(onBeforeStart: () => void) {
 	async function stopRecord() {
 		try {
 			await emit('stop_record')
+			setIsPaused(false)
 		} catch (error) {
 			stopKeepAwake(KEEP_AWAKE.record)
 			setIsRecording(false)
+			setIsPaused(false)
 			console.error('stopRecord error: ', error)
 			setErrorModal?.({ log: String(error), open: true })
 		}
@@ -90,11 +115,15 @@ export function useRecording(onBeforeStart: () => void) {
 		outputDevice,
 		isRecording,
 		setIsRecording,
+		isPaused,
+		setIsPaused,
 		recordingName,
 		setRecordingName,
 		setInputDevice: setInputDeviceAndSave,
 		setOutputDevice: setOutputDeviceAndSave,
 		startRecord,
+		pauseRecord,
+		resumeRecord,
 		stopRecord,
 	}
 }

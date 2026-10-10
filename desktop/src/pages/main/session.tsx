@@ -143,16 +143,41 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 		if (recordingShortcut.isShortcutRecording) setPanel('record')
 	}, [recordingShortcut.isShortcutRecording])
 
+	const accumulatedMsRef = useRef(0)
+	const segmentStartRef = useRef<number | null>(null)
+
 	useEffect(() => {
 		if (!recording.isRecording) {
+			accumulatedMsRef.current = 0
+			segmentStartRef.current = null
 			setRecordElapsed(0)
 			return
 		}
-		setRecordElapsed(0)
-		const startedAt = Date.now()
-		const timer = window.setInterval(() => setRecordElapsed(Math.floor((Date.now() - startedAt) / 1000)), 500)
-		return () => window.clearInterval(timer)
-	}, [recording.isRecording])
+
+		if (recording.isPaused) {
+			if (segmentStartRef.current !== null) {
+				accumulatedMsRef.current += Date.now() - segmentStartRef.current
+				segmentStartRef.current = null
+			}
+			setRecordElapsed(Math.floor(accumulatedMsRef.current / 1000))
+			return
+		}
+
+		segmentStartRef.current = Date.now()
+		const updateElapsed = () => {
+			const currentSegment = segmentStartRef.current ? Date.now() - segmentStartRef.current : 0
+			setRecordElapsed(Math.floor((accumulatedMsRef.current + currentSegment) / 1000))
+		}
+		updateElapsed()
+		const timer = window.setInterval(updateElapsed, 250)
+		return () => {
+			window.clearInterval(timer)
+			if (segmentStartRef.current !== null) {
+				accumulatedMsRef.current += Date.now() - segmentStartRef.current
+				segmentStartRef.current = null
+			}
+		}
+	}, [recording.isRecording, recording.isPaused])
 
 	// A recording becomes a durable project first. Transcription is an optional second step which
 	// updates that same project, so a failed/disabled transcription never costs the user the audio.
@@ -160,6 +185,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 		const unlisten: Promise<UnlistenFn> = listen<{ path: string; name: string; warning?: string }>('record_finish', async ({ payload }) => {
 			if (hotkeyRecordingActive) return
 			recording.setIsRecording(false)
+			recording.setIsPaused(false)
 			setPanel('none')
 			if (payload.warning) toast.warning(m.recordingRecoveredWarning(), { description: payload.warning, position: 'bottom-center' })
 

@@ -72,13 +72,26 @@ export const mediaMiscHandlers: CommandHandlerMap = {
 		const path = `${APP_LOCAL_DATA}/recording.wav`
 		// Stand in for the capture callbacks: a level event every 100ms, like the throttled Rust side.
 		let tick = 0
+		let isPaused = false
 		const levelTimer = window.setInterval(() => {
-			tick += 1
-			emitMockEvent('record_level', mockSpeechLevel(tick))
+			if (!isPaused) {
+				tick += 1
+				emitMockEvent('record_level', mockSpeechLevel(tick))
+			} else {
+				emitMockEvent('record_level', 0)
+			}
 		}, RECORD_LEVEL_TICK_MS)
+		const unsubPause = onMockEvent('pause_record', () => {
+			isPaused = true
+		})
+		const unsubResume = onMockEvent('resume_record', () => {
+			isPaused = false
+		})
 		// The frontend stops recording by emitting `stop_record` on the event bus.
 		const unsub = onMockEvent('stop_record', () => {
 			unsub()
+			unsubPause()
+			unsubResume()
 			window.clearInterval(levelTimer)
 			setTimeout(() => {
 				virtualFs.set(path, null)

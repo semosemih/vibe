@@ -700,5 +700,7 @@
 	"phonePairedOn": "Sparowano {date}",
 	"phoneRevokeDevice": "Odwołaj",
 	"phoneRevokeDeviceNamed": "Odwołaj {name}",
-	"whatsNew": "Co nowego"
+	"whatsNew": "Co nowego",
+	"pauseRecording": "Wstrzymaj",
+	"resumeRecording": "Wznów"
 }

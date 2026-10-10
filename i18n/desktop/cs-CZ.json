@@ -700,5 +700,7 @@
 	"phonePairedOn": "Spárováno {date}",
 	"phoneRevokeDevice": "Odvolat",
 	"phoneRevokeDeviceNamed": "Odvolat {name}",
-	"whatsNew": "Novinky"
+	"whatsNew": "Novinky",
+	"pauseRecording": "Pozastavit",
+	"resumeRecording": "Pokračovat"
 }

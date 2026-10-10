@@ -700,5 +700,7 @@
 	"phonePairedOn": "Vinculat el {date}",
 	"phoneRevokeDevice": "Revoca",
 	"phoneRevokeDeviceNamed": "Revoca {name}",
-	"whatsNew": "Novetats"
+	"whatsNew": "Novetats",
+	"pauseRecording": "Pausa",
+	"resumeRecording": "Reprèn"
 }

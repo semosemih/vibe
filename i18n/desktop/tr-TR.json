@@ -700,5 +700,7 @@
 	"phonePairedOn": "{date} tarihinde eşleşti",
 	"phoneRevokeDevice": "İptal et",
 	"phoneRevokeDeviceNamed": "{name} erişimini iptal et",
-	"whatsNew": "Yenilikler"
+	"whatsNew": "Yenilikler",
+	"pauseRecording": "Duraklat",
+	"resumeRecording": "Devam et"
 }

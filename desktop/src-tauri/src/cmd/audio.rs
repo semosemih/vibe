@@ -7,7 +7,7 @@ use serde_json::json;
 use std::fs::File;
 use std::io::BufWriter;
 use std::path::PathBuf;
-use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
 use tauri::{AppHandle, Emitter, Listener};
@@ -157,6 +157,7 @@ pub async fn start_record(app_handle: AppHandle, devices: Vec<AudioDevice>, reco
     let mut wav_paths: Vec<(PathBuf, u32)> = Vec::new();
     let mut stream_handles = Vec::new();
     let mut stream_writers = Vec::new();
+    let paused = Arc::new(AtomicBool::new(false));
     // One meter for the whole session: input and output streams both feed it, so the UI sees
     // the max of the two under a single throttled `record_level` event.
     let meter = Arc::new(LevelMeter::new(app_handle.clone()));
@@ -185,7 +186,7 @@ pub async fn start_record(app_handle: AppHandle, devices: Vec<AudioDevice>, reco
         stream_writers.push(writer.clone());
         let writer_2 = writer.clone();
 
-        let stream = build_input_stream(&device, config, writer_2, meter.clone())?;
+        let stream = build_input_stream(&device, config, writer_2, meter.clone(), paused.clone())?;
         stream.play()?;
         tracing::debug!("Stream started playing");
 
@@ -194,8 +195,22 @@ pub async fn start_record(app_handle: AppHandle, devices: Vec<AudioDevice>, reco
         tracing::debug!("Stream handle created");
     }
 
+    let paused_pause = paused.clone();
+    let pause_id = app_handle.listen("pause_record", move |_event| {
+        tracing::debug!("Pausing recording");
+        paused_pause.store(true, Ordering::Relaxed);
+    });
+
+    let paused_resume = paused.clone();
+    let resume_id = app_handle.listen("resume_record", move |_event| {
+        tracing::debug!("Resuming recording");
+        paused_resume.store(false, Ordering::Relaxed);
+    });
+
     let app_handle_clone = app_handle.clone();
     app_handle.once("stop_record", move |_event| {
+        app_handle_clone.unlisten(pause_id);
+        app_handle_clone.unlisten(resume_id);
         for (i, stream_handle) in stream_handles.iter().enumerate() {
             let stream_handle = stream_handle.lock().map_err(|e| eyre!("{:?}", e)).log_error();
             if let Some(mut stream_handle) = stream_handle {
@@ -329,6 +344,7 @@ fn build_input_stream_typed<T>(
     config: SupportedStreamConfig,
     writer: WavWriterHandle,
     meter: Arc<LevelMeter>,
+    paused: Arc<AtomicBool>,
 ) -> Result<Stream>
 where
     T: SizedSample + hound::Sample + FromSample<T> + Mul<Output = T> + Copy,
@@ -337,8 +353,12 @@ where
     let stream = device.build_input_stream(
         config.into(),
         move |data: &[T], _: &_| {
-            meter.push(buffer_peak(data));
-            write_input_data::<T, T>(data, &writer)
+            if paused.load(Ordering::Relaxed) {
+                meter.push(0.0);
+            } else {
+                meter.push(buffer_peak(data));
+                write_input_data::<T, T>(data, &writer);
+            }
         },
         |err| tracing::error!("An error occurred on stream: {}", err),
         None,
@@ -351,12 +371,13 @@ fn build_input_stream(
     config: SupportedStreamConfig,
     writer: WavWriterHandle,
     meter: Arc<LevelMeter>,
+    paused: Arc<AtomicBool>,
 ) -> Result<Stream> {
     match config.sample_format() {
-        cpal::SampleFormat::I8 => build_input_stream_typed::<i8>(device, config, writer, meter),
-        cpal::SampleFormat::I16 => build_input_stream_typed::<i16>(device, config, writer, meter),
-        cpal::SampleFormat::I32 => build_input_stream_typed::<i32>(device, config, writer, meter),
-        cpal::SampleFormat::F32 => build_input_stream_typed::<f32>(device, config, writer, meter),
+        cpal::SampleFormat::I8 => build_input_stream_typed::<i8>(device, config, writer, meter, paused),
+        cpal::SampleFormat::I16 => build_input_stream_typed::<i16>(device, config, writer, meter, paused),
+        cpal::SampleFormat::I32 => build_input_stream_typed::<i32>(device, config, writer, meter, paused),
+        cpal::SampleFormat::F32 => build_input_stream_typed::<f32>(device, config, writer, meter, paused),
         sample_format => bail!("Unsupported sample format '{}'", sample_format),
     }
 }

@@ -700,5 +700,7 @@
 	"phonePairedOn": "Parkopplad {date}",
 	"phoneRevokeDevice": "Återkalla",
 	"phoneRevokeDeviceNamed": "Återkalla {name}",
-	"whatsNew": "Nyheter"
+	"whatsNew": "Nyheter",
+	"pauseRecording": "Pausa",
+	"resumeRecording": "Återuppta"
 }

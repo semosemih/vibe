@@ -700,5 +700,7 @@
 	"phonePairedOn": "Associato il {date}",
 	"phoneRevokeDevice": "Revoca",
 	"phoneRevokeDeviceNamed": "Revoca {name}",
-	"whatsNew": "Novità"
+	"whatsNew": "Novità",
+	"pauseRecording": "Pausa",
+	"resumeRecording": "Riprendi"
 }

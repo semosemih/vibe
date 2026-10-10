@@ -700,5 +700,7 @@
 	"phonePairedOn": "配对于 {date}",
 	"phoneRevokeDevice": "撤销",
 	"phoneRevokeDeviceNamed": "撤销 {name}",
-	"whatsNew": "更新内容"
+	"whatsNew": "更新内容",
+	"pauseRecording": "暂停",
+	"resumeRecording": "继续"
 }
