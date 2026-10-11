@@ -15,9 +15,18 @@ function withoutMediaExtension(name: string): string {
 	return mediaExtensions.has(extension) ? name.slice(0, dot) : name
 }
 
+const timestampPattern = /^\d{4}-\d{2}-\d{2}(?:[ _-]\d{2}[-_]\d{2}[-_]\d{2})?$/
+
 /** Build the default saved-project name. User-entered names never pass through this helper. */
 export function autoProjectName(name: string, source: ProjectSource = 'file'): string {
-	return `${sourcePrefixes[source]}${withoutMediaExtension(name)}`
+	const stem = withoutMediaExtension(name).trim()
+	if (source === 'record') {
+		if (!stem || timestampPattern.test(stem) || stem.toLowerCase() === 'recording' || stem.toLowerCase() === 'record') {
+			return 'Recording'
+		}
+		if (stem.startsWith('Record-')) return stem
+	}
+	return `${sourcePrefixes[source]}${stem}`
 }
 
 /** Turn the visible project title into a safe, recognizable export filename. */

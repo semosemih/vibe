@@ -17,6 +17,16 @@ describe('autoProjectName', () => {
 	it('preserves dots that are not supported media extensions', () => {
 		expect(autoProjectName('meeting.notes')).toBe('File-meeting.notes')
 	})
+
+	it.each([
+		['recording.wav', 'Recording'],
+		['Recording.wav', 'Recording'],
+		['', 'Recording'],
+		['2026-08-23 04-03-32.wav', 'Recording'],
+		['2026-10-11 13-29-10', 'Recording'],
+	])('defaults unnamed or timestamped recording names to "Recording"', (name, expected) => {
+		expect(autoProjectName(name, 'record')).toBe(expected)
+	})
 })
 
 describe('projectExportFilename', () => {

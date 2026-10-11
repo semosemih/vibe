@@ -100,14 +100,17 @@ function stamp(date: Date) {
 }
 
 const stampPattern = /-(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})$/
+const legacyDatePattern = /^(?:Record-)?\d{4}-\d{2}-\d{2}(?:[ _-]\d{2}[-_]\d{2}[-_]\d{2})?$/
 
 function parseStamp(stem: string): { name: string; createdAt: Date } {
 	const match = stem.match(stampPattern)
 	if (!match) return { name: stem, createdAt: new Date(0) }
 	const [, year, month, day, hours, minutes, seconds] = match
 	const createdAt = new Date(Number(year), Number(month) - 1, Number(day), Number(hours), Number(minutes), Number(seconds))
+	const rawName = stem.slice(0, match.index) || stem
+	const name = legacyDatePattern.test(rawName) ? 'Recording' : rawName
 	return {
-		name: stem.slice(0, match.index) || stem,
+		name,
 		createdAt: Number.isNaN(createdAt.getTime()) ? new Date(0) : createdAt,
 	}
 }

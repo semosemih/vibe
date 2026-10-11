@@ -13,7 +13,7 @@ use std::time::Instant;
 use tauri::{AppHandle, Emitter, Listener};
 
 use crate::error::LogError;
-use crate::ffmpeg::{get_local_time, random_string};
+use crate::ffmpeg::random_string;
 
 type WavWriterHandle = Arc<Mutex<Option<hound::WavWriter<BufWriter<File>>>>>;
 
@@ -253,7 +253,7 @@ pub async fn start_record(app_handle: AppHandle, devices: Vec<AudioDevice>, reco
             .as_deref()
             .map(crate::cmd::files::sanitize_filename_stem)
             .filter(|name| !name.is_empty())
-            .unwrap_or_else(get_local_time);
+            .unwrap_or_else(|| "Recording".to_string());
         let temp_dir = get_vibe_temp_folder();
         let normalized = crate::cmd::files::available_path(&temp_dir, &recording_stem, "wav");
         let output = match crate::ffmpeg::normalize(dst.clone(), normalized.clone(), None) {

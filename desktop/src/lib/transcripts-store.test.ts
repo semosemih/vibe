@@ -70,10 +70,28 @@ vi.mock('@tauri-apps/plugin-fs', () => ({
 			for (const directory of [...disk.directories]) if (directory === path || directory.startsWith(`${path}/`)) disk.directories.delete(directory)
 		}
 	},
-	readDir: async () => [],
+	readDir: async (folder: string) => {
+		const names = new Set<string>()
+		for (const dir of disk.directories) {
+			if (dir.startsWith(`${folder}/`) && !dir.slice(folder.length + 1).includes('/')) {
+				names.add(dir.slice(folder.length + 1))
+			}
+		}
+		for (const file of disk.files.keys()) {
+			if (file.startsWith(`${folder}/`) && !file.slice(folder.length + 1).includes('/')) {
+				names.add(file.slice(folder.length + 1))
+			}
+		}
+		return [...names].map((name) => ({
+			name,
+			isDirectory: disk.directories.has(`${folder}/${name}`),
+			isFile: disk.files.has(`${folder}/${name}`),
+			isSymlink: false,
+		}))
+	},
 }))
 
-import { readTranscript, renameTranscript, resolveProjectAudio, saveTranscript } from './transcripts-store'
+import { listTranscripts, readTranscript, renameTranscript, resolveProjectAudio, saveTranscript } from './transcripts-store'
 
 const createdAt = new Date(2026, 7, 26, 10, 20, 30)
 const segments = [{ start: 0, stop: 100, text: 'Hello' }]
@@ -245,5 +263,25 @@ describe('project media ownership', () => {
 		expect(await renameTranscript(saved!.recordPath, 'Broken')).toBeNull()
 		expect(await readTranscript(saved!.recordPath)).not.toBeNull()
 		expect(disk.directories.has('/media/projects/Broken-20260826-102030')).toBe(false)
+	})
+
+	it('normalizes legacy timestamp folders to "Recording" in listTranscripts', async () => {
+		disk.directories.add('/media/projects')
+		disk.directories.add('/media/projects/Record-2026-10-11 13-29-10-20261011-132910')
+		disk.files.set(
+			'/media/projects/Record-2026-10-11 13-29-10-20261011-132910/transcript.vibe.json',
+			JSON.stringify({ name: 'Record-2026-10-11 13-29-10', segments: [] }),
+		)
+
+		disk.directories.add('/media/projects/Recording-20261011-134000')
+		disk.files.set(
+			'/media/projects/Recording-20261011-134000/transcript.vibe.json',
+			JSON.stringify({ name: 'Recording', segments: [] }),
+		)
+
+		const entries = await listTranscripts('/media/projects')
+		expect(entries).toHaveLength(2)
+		expect(entries[0].name).toBe('Recording')
+		expect(entries[1].name).toBe('Recording')
 	})
 })
